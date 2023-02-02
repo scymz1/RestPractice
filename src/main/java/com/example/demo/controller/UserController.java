@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -24,7 +26,7 @@ public class UserController {
     }
 
     @GetMapping("")
-    ResponseEntity<List<Integer>> getRewards(@RequestParam String userId, @RequestParam Date endDate) {
-        return new ResponseEntity(userService.getRewards(userId, endDate), HttpStatus.OK);
+    ResponseEntity<ArrayList<HashMap<String, Integer>>> getRewards(@RequestParam Date endDate) {
+        return new ResponseEntity(userService.getRewards(endDate), HttpStatus.OK);
     }
 }

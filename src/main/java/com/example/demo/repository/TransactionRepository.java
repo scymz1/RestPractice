@@ -10,5 +10,5 @@ import java.util.List;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<UserTransactions, Integer> {
-    List<UserTransactions> getUserTransactionsByDateBetweenAndUserInfo(Date date, Date date2, UserInfo userInfo);
+    List<UserTransactions> getUserTransactionsByDateBetween(Date date, Date date2);
 }
