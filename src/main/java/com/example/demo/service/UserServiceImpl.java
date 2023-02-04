@@ -1,19 +1,20 @@
 package com.example.demo.service;
 
 
+import com.example.demo.pojo.dto.RewardsDTO;
+import com.example.demo.pojo.entity.UserInfo;
 import com.example.demo.pojo.entity.UserTransactions;
 import com.example.demo.repository.TransactionRepository;
 
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
+@Service
 public class UserServiceImpl implements UserService {
 
     private final TransactionRepository transactionRepository;
@@ -26,49 +27,51 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ArrayList<HashMap<String, Integer>> getRewards(Date endDate) {
+    public RewardsDTO getRewardsOfEachMonth(Date startDate, Date endDate) {
+        LocalDate start = startDate.toLocalDate();
         LocalDate end = endDate.toLocalDate();
-        LocalDate start = end.minusMonths(3);
-        LocalDate second = end.minusMonths(2);
-        LocalDate third = end.minusMonths(1);
-        List<UserTransactions> userTransactionsList1 = this.transactionRepository.getUserTransactionsByDateBetween(
-                Date.valueOf(start), Date.valueOf(second));
-        List<UserTransactions> userTransactionsList2 = this.transactionRepository.getUserTransactionsByDateBetween(
-                Date.valueOf(second), Date.valueOf(third));
-        List<UserTransactions> userTransactionsList3 = this.transactionRepository.getUserTransactionsByDateBetween(
-                Date.valueOf(third), Date.valueOf(end));
+        List<RewardsDTO.RewardsEachMonthDTO> rewardsEachMonthDTOList = new ArrayList<>();
+        while (start.isBefore(end)) {
+            LocalDate nextMonth = start.plusMonths(1);
+            System.out.println(Date.valueOf(start));
+            System.out.println(Date.valueOf(nextMonth));
+            System.out.println(this.transactionRepository.getUserTransactionsByDateBetween(
+                    Date.valueOf(start), Date.valueOf(nextMonth)));
 
-        ArrayList<List<UserTransactions>> transactionLists = new ArrayList<>();
-        transactionLists.add(userTransactionsList1);
-        transactionLists.add(userTransactionsList2);
-        transactionLists.add(userTransactionsList3);
+            List<UserTransactions> userTransactionsList = this.transactionRepository.getUserTransactionsByDateBetween(
+                    Date.valueOf(start), Date.valueOf(nextMonth));
 
-        ArrayList<HashMap<String, Integer>> rewards = new ArrayList<>();
-        for(List<UserTransactions> transactionList: transactionLists) {
-            HashMap<String, Integer> rewardsEachMonth = new HashMap<>();
-            transactionList.stream().forEach(transaction -> {
-                String id = transaction.getUserInfo().getId();
-                rewardsEachMonth.put(id, rewardsEachMonth.getOrDefault(id, 0) + transaction.getAmount());
+            HashMap<Integer, Long> rewardsEachMonth = new HashMap<>();
+            userTransactionsList.stream().forEach(transaction -> {
+                int id = transaction.getUserInfo().getId();
+                rewardsEachMonth.put(id, rewardsEachMonth.getOrDefault(id, Long.valueOf(0)) + transaction.getAmount());
+                for(int userId: rewardsEachMonth.keySet()) {
+                    Long amount = rewardsEachMonth.get(userId);
+                }
             });
-
-            for(String id: rewardsEachMonth.keySet()) {
-                int amount = rewardsEachMonth.get(id);
-                rewardsEachMonth.put(id, Math.max(amount - 50, 0) + Math.max(amount - 100, 0) * 2);
+            List<RewardsDTO.RewardsEachMonthDTO.CustomerRewardsEachMothDTO> rewardsEachMonthDTO = new ArrayList<>();
+            for(int id: rewardsEachMonth.keySet()) {
+                Long amount = rewardsEachMonth.get(id);
+                amount = Math.max(amount - 50, 0) + Math.max(amount - 100, 0) * 2;
+                rewardsEachMonthDTO.add(new RewardsDTO.RewardsEachMonthDTO.CustomerRewardsEachMothDTO(id, amount));
             }
-
-            rewards.add(rewardsEachMonth);
+            rewardsEachMonthDTOList.add(new RewardsDTO.RewardsEachMonthDTO(start.getMonth(), rewardsEachMonthDTO));
+            start = nextMonth;
         }
 
 
-//        int firstMonth = userTransactionsList1.stream().map(transactions -> (transactions.getAmount())).reduce(0, Integer::sum);
-//        int secondMonth = userTransactionsList2.stream().map(transactions -> (transactions.getAmount())).reduce(0, Integer::sum);
-//        int thirdMonth = userTransactionsList3.stream().map(transactions -> (transactions.getAmount())).reduce(0, Integer::sum);
-//        List<Integer> awards = new ArrayList<>();
-//        awards.add(firstMonth);
-//        awards.add(secondMonth);
-//        awards.add(thirdMonth);
+        return new RewardsDTO(rewardsEachMonthDTOList);
+    }
 
-        //awards.stream().map(a -> Math.max(a - 50, 0) + Math.max(a - 100, 0) * 2).collect(Collectors.toList());
-        return rewards;
+    @Override
+    public Integer insertTransactions(UserTransactions userTransactions) {
+        this.transactionRepository.save(userTransactions);
+        return userTransactions.getTransactionId();
+    }
+
+    @Override
+    public int insertUser(UserInfo customer) {
+        this.userRepository.save(customer);
+        return customer.getId();
     }
 }

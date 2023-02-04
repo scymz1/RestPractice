@@ -1,33 +1,37 @@
 package com.example.demo.pojo.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Date;
 import java.util.List;
 
-@Data
+//@Data
 @Entity
 @Table(name = "userTransactions")
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserTransactions {
+    @Getter
+    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    String transactionId;
+    int transactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
+    @Getter
+    @Setter
     UserInfo userInfo;
 
 
     @Column(name = "date")
+    @Getter
     Date date;
 
+    @Getter
     @Column(name = "TransactionAmount")
-    int amount;
+    Long amount;
 
 
 }
